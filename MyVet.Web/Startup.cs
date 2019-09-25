@@ -35,7 +35,7 @@ namespace MyVet.Web
             {
                 cfg.User.RequireUniqueEmail = true;
                 cfg.Password.RequireDigit = false;
-                cfg.Password.RequiredUniqueChars = 0;
+                cfg.Password.RequiredUniqueChars = 6;
                 cfg.Password.RequireLowercase = false;
                 cfg.Password.RequireNonAlphanumeric = false;
                 cfg.Password.RequireUppercase = false;
