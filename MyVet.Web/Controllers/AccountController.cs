@@ -38,10 +38,18 @@ namespace MyVet.Web.Controllers
                     return RedirectToAction("Index", "Home");
                 }
                 ModelState.AddModelError(string.Empty, "User or password no valid.");
+                model.Password = string.Empty;
 
             }
             
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Logout()
+        {
+            await _userHelper.LogoutAsync();
+            return RedirectToAction("Index", "Home");
         }
 
     }
