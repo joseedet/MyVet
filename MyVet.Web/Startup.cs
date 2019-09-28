@@ -48,7 +48,8 @@ namespace MyVet.Web
 
             services.AddTransient<SeedDb>();//se ejecuta una sola vez
             services.AddScoped<IUserHelper, UserHelper>();//Instancia siempre un nuevo objeto
-
+            services.AddScoped<ICombosHelper,CombosHelper>() ;
+            services.AddScoped<IConverterHelper, ConverterHelper>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
