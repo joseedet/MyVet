@@ -247,7 +247,7 @@ namespace MyVet.Web.Controllers
                     path = await _imageHelper.UploadImageAsync(model.ImageFile);
                 }
 
-                var pet = await _converterHelper.ToPetAsync(model, path);
+                var pet = await _converterHelper.ToPetAsync(model, path,true);
                 _context.Add(pet);
 
                 try
@@ -297,7 +297,7 @@ namespace MyVet.Web.Controllers
                     path = await _imageHelper.UploadImageAsync(model.ImageFile);
                 }
 
-                var pet = await _converterHelper.ToPetAsync(model, path);
+                var pet = await _converterHelper.ToPetAsync(model, path,false);
                 _context.Update(pet);
                 try
                 {
