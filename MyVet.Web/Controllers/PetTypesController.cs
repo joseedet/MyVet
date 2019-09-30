@@ -12,17 +12,17 @@ namespace MyVet.Web.Controllers
 {
     public class PetTypesController : Controller
     {
-        private readonly DataContext _context;
+        private readonly DataContext _dataContext;
 
         public PetTypesController(DataContext context)
         {
-            _context = context;
+            _dataContext = context;
         }
 
         // GET: PetTypes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.PetTypes.ToListAsync());
+            return View(await _dataContext.PetTypes.ToListAsync());
         }
 
         // GET: PetTypes/Details/5
@@ -33,7 +33,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var petType = await _context.PetTypes
+            var petType = await _dataContext.PetTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (petType == null)
             {
@@ -58,8 +58,8 @@ namespace MyVet.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(petType);
-                await _context.SaveChangesAsync();
+                _dataContext.Add(petType);
+                await _dataContext.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(petType);
@@ -73,7 +73,7 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var petType = await _context.PetTypes.FindAsync(id);
+            var petType = await _dataContext.PetTypes.FindAsync(id);
             if (petType == null)
             {
                 return NotFound();
@@ -97,8 +97,8 @@ namespace MyVet.Web.Controllers
             {
                 try
                 {
-                    _context.Update(petType);
-                    await _context.SaveChangesAsync();
+                    _dataContext.Update(petType);
+                    await _dataContext.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -124,30 +124,32 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var petType = await _context.PetTypes
+            var petType = await _dataContext.PetTypes
+                .Include(pt => pt.Pets)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (petType == null)
             {
                 return NotFound();
             }
-
-            return View(petType);
-        }
-
-        // POST: PetTypes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var petType = await _context.PetTypes.FindAsync(id);
-            _context.PetTypes.Remove(petType);
-            await _context.SaveChangesAsync();
+          
+            if(petType.Pets.Count >0 )
+            {
+                //TODO:Validation Summary.
+                ModelState.AddModelError(string.Empty,
+                    "The pet can't be deleted because it has related records.");
+                return RedirectToAction(nameof(Index));
+            }
+            //TODO:Falta try catch
+            _dataContext.PetTypes.Remove(petType);
+            await _dataContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+            //return View(petType);
         }
 
+       
         private bool PetTypeExists(int id)
         {
-            return _context.PetTypes.Any(e => e.Id == id);
+            return _dataContext.PetTypes.Any(e => e.Id == id);
         }
     }
 }
