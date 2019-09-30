@@ -247,7 +247,7 @@ namespace MyVet.Web.Controllers
                     path = await _imageHelper.UploadImageAsync(model.ImageFile);
                 }
 
-                var pet = await _converterHelper.ToPetAsync(model, path,true);
+                var pet = await _converterHelper.ToPetAsync(model, path, true);
                 _dataContext.Add(pet);
 
                 try
@@ -275,30 +275,30 @@ namespace MyVet.Web.Controllers
             //Unimos propietario con mascota. Y mascota con tipo de mascota.
             var pet = await _dataContext.Pets
                 .Include(p => p.Owner)
-                .Include(p=> p.PetType)
-                .FirstOrDefaultAsync(p => p.Id==id);
+                .Include(p => p.PetType)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (pet == null) 
+            if (pet == null)
             {
                 return NotFound();
-            }            
+            }
 
             return View(_converterHelper.ToPetViewModel(pet));
         }
         [HttpPost]
         public async Task<IActionResult> EditPet(PetViewModel model)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
 
-                var path =model.ImageUrl;
+                var path = model.ImageUrl;
 
                 if (model.ImageUrl != null)
                 {
                     path = await _imageHelper.UploadImageAsync(model.ImageFile);
                 }
 
-                var pet = await _converterHelper.ToPetAsync(model, path,false);
+                var pet = await _converterHelper.ToPetAsync(model, path, false);
                 _dataContext.Update(pet);
                 try
                 {
@@ -369,9 +369,9 @@ namespace MyVet.Web.Controllers
                 var history = await _converterHelper.ToHistoryAsync(model, true);
                 _dataContext.Histories.Add(history);
                 try
-                { 
-                await _dataContext.SaveChangesAsync();
-                return RedirectToAction($"{nameof(DetailsPet)}/{model.PetId}");
+                {
+                    await _dataContext.SaveChangesAsync();
+                    return RedirectToAction($"{nameof(DetailsPet)}/{model.PetId}");
                 }
                 catch (Exception ex)
                 {
@@ -412,7 +412,7 @@ namespace MyVet.Web.Controllers
                 //var history = await _converterHelper.ToHistoryAsync(model, false);
                 try
                 {
-                     var history = await _converterHelper.ToHistoryAsync(model, false);
+                    var history = await _converterHelper.ToHistoryAsync(model, false);
                     _dataContext.Histories.Update(history);
                     await _dataContext.SaveChangesAsync();
                     return RedirectToAction($"{nameof(DetailsPet)}/{model.PetId}");
@@ -426,19 +426,59 @@ namespace MyVet.Web.Controllers
                            ex.ToString());
                     return View(model);
                 }
-              
+
             }
             model.ServiceTypes = _combosHelper.GetComboServiceTypes();
             return View(model);
         }
+        public async Task<IActionResult> DeleteHistory(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
+            var history = await _dataContext.Histories
+                .Include(h => h.Pet)
+                .FirstOrDefaultAsync(h => h.Id == id.Value);
+            if (history == null)
+            {
+                return NotFound();
+            }
+            _dataContext.Histories.Remove(history);
+            await _dataContext.SaveChangesAsync();
+            return RedirectToAction($"{nameof(DetailsPet)}/{history.Pet.Id}");
+        }
+        public async Task<IActionResult> DeletePet(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-
-
-
+            var pet = await _dataContext.Pets
+                .Include(p => p.Owner)
+                .Include(p=> p.Histories)
+                .FirstOrDefaultAsync(p => p.Id == id.Value);
+            if (pet == null)
+            {
+                return NotFound();
+            }
+            if(pet.Histories.Count > 0)
+            {
+               //TODO:Validation Summary.
+                ModelState.AddModelError(string.Empty,
+                    "The pet can't be deleted because it has related records.");
+                return RedirectToAction($"{nameof(Details)}/{pet.Owner.Id}"); 
+            }
+            _dataContext.Pets.Remove(pet);
+            await _dataContext.SaveChangesAsync();
+            return RedirectToAction($"{nameof(Details)}/{pet.Owner.Id}");
+        }
     }
-
-
-
 }
+
+
+
+
 
