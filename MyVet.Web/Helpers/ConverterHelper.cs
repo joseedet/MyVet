@@ -8,22 +8,22 @@ namespace MyVet.Web.Helpers
 {
     public class ConverterHelper : IConverterHelper
     {
-        private readonly DataContext _dataContext;        
+        private readonly DataContext _dataContext;
         private readonly ICombosHelper _combosHelper;
 
 
-        public ConverterHelper(DataContext dataContext,           
+        public ConverterHelper(DataContext dataContext,
             ICombosHelper combosHelper)
         {
-            _dataContext = dataContext;            
+            _dataContext = dataContext;
             _combosHelper = combosHelper;
             ;
         }
-        public async Task<Pet> ToPetAsync(PetViewModel model, string path,bool isNew)
+        public async Task<Pet> ToPetAsync(PetViewModel model, string path, bool isNew)
         {
             var pet = new Pet
             {
-                
+
                 Agendas = model.Agendas,
                 Born = model.Born,
                 Histories = model.Histories,
@@ -37,7 +37,7 @@ namespace MyVet.Web.Helpers
 
 
             };
-           
+
 
             return pet;
         }
@@ -62,5 +62,32 @@ namespace MyVet.Web.Helpers
             };
 
         }
+        public async Task<History> ToHistoryAsync(HistoryViewModel model, bool isNew)
+        {
+            return new History
+            {
+                Date = model.Date.ToUniversalTime(),
+                Description = model.Description,
+                Id = isNew ? 0 : model.Id,
+                Pet = await _dataContext.Pets.FindAsync(model.PetId),
+                Remarks = model.Remarks,
+                ServiceType = await _dataContext.ServiceTypes.FindAsync(model.ServiceTypeId)
+            };
+        }
+
+        public HistoryViewModel ToHistoryViewModel(History history)
+        {
+            return new HistoryViewModel
+            {
+                Date = history.Date,
+                Description = history.Description,
+                Id = history.Id,
+                PetId = history.Pet.Id,
+                Remarks = history.Remarks,
+                ServiceTypeId = history.ServiceType.Id,
+                ServiceTypes = _combosHelper.GetComboServiceTypes()
+            };
+        }
+
     }
 }
