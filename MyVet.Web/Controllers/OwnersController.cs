@@ -136,48 +136,50 @@ namespace MyVet.Web.Controllers
                 return NotFound();
             }
 
-            var owner = await _dataContext.Owners.FindAsync(id);
+            var owner = await _dataContext.Owners
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.Id == id.Value);
             if (owner == null)
             {
                 return NotFound();
             }
-            return View(owner);
+
+            var view = new EditUserViewModel
+            {
+                Address = owner.User.Address,
+                Document = owner.User.Document,
+                FirstName = owner.User.FirstName,
+                Id = owner.Id,
+                LastName = owner.User.LastName,
+                PhoneNumber = owner.User.PhoneNumber
+            };
+
+            return View(view);
         }
 
-        // POST: Owners/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id")] Owner owner)
+        public async Task<IActionResult> Edit(EditUserViewModel model)
         {
-            if (id != owner.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _dataContext.Update(owner);
-                    await _dataContext.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OwnerExists(owner.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                var owner = await _dataContext.Owners
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == model.Id);
+
+                owner.User.Document = model.Document;
+                owner.User.FirstName = model.FirstName;
+                owner.User.LastName = model.LastName;
+                owner.User.Address = model.Address;
+                owner.User.PhoneNumber = model.PhoneNumber;
+
+                await _userHelper.UpdateUserAsync(owner.User);
                 return RedirectToAction(nameof(Index));
             }
-            return View(owner);
+
+            return View(model);
         }
+
 
         // GET: Owners/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -188,14 +190,14 @@ namespace MyVet.Web.Controllers
             }
 
             var owner = await _dataContext.Owners
-                .Include(o=> o.User)
+                .Include(o => o.User)
                 .Include(o => o.Pets)
                 .FirstOrDefaultAsync(o => o.Id == id);
             if (owner == null)
             {
                 return NotFound();
             }
-            if(owner.Pets.Count >0)
+            if (owner.Pets.Count > 0)
             {
                 ModelState.AddModelError(string.Empty,
                     "The pet can't be deleted because it has related records.");
@@ -209,7 +211,7 @@ namespace MyVet.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-       
+
 
         private bool OwnerExists(int id)
         {
@@ -461,18 +463,18 @@ namespace MyVet.Web.Controllers
 
             var pet = await _dataContext.Pets
                 .Include(p => p.Owner)
-                .Include(p=> p.Histories)
+                .Include(p => p.Histories)
                 .FirstOrDefaultAsync(p => p.Id == id.Value);
             if (pet == null)
             {
                 return NotFound();
             }
-            if(pet.Histories.Count > 0)
+            if (pet.Histories.Count > 0)
             {
-               //TODO:Validation Summary.
+                //TODO:Validation Summary.
                 ModelState.AddModelError(string.Empty,
                     "The pet can't be deleted because it has related records.");
-                return RedirectToAction($"{nameof(Details)}/{pet.Owner.Id}"); 
+                return RedirectToAction($"{nameof(Details)}/{pet.Owner.Id}");
             }
             _dataContext.Pets.Remove(pet);
             await _dataContext.SaveChangesAsync();
